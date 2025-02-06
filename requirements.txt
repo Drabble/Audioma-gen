@@ -1,0 +1,17 @@
+openai==1.57.0
+python-dotenv
+pydub
+nltk
+boto3
+sqlalchemy
+psycopg2
+openai-whisper
+replicate
+cartesia
+numpy
+TextGrid
+pysrt
+speechbrain
+samplerate
+resampy
+anthropic
