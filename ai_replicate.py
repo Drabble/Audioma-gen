@@ -1,12 +1,6 @@
-import time
-import openai
 import os
-from pydub import AudioSegment
 from pathlib import Path
 from replicate.client import Client
-from cartesia import Cartesia
-
-from prompts import *
 
 replicate = Client(
     api_token=os.getenv('REPLICATE_API_TOKEN'),

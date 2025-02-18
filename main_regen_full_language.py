@@ -1,11 +1,9 @@
 import nltk
 
-from ai_google import generateAudioAndSrt_google
-from main import choose_thumbnail_no_text, choose_book_translation
+from ai_google import *
+from main import choose_book_translation, choose_text_translation
 from s3 import *
 from db import *
-
-# Download the necessary NLTK data files
 nltk.download('punkt')
 nltk.download('punkt_tab')
 
@@ -37,6 +35,7 @@ languages = {"FR": "French",
              # "HI": "Hindi"
              }
 
+
 def choose_book():
     books = get_books()
 
@@ -62,63 +61,35 @@ def choose_book():
         except ValueError:
             print("Invalid input. Please enter a valid number.")
 
-
-def choose_and_display_translations(book_id):
-    if not book_id:
-        print("No book selected.")
-        return []
-
-    # Retrieve and display translations for the selected book
-    translations = get_translations(book_id)
-    if not translations:
-        print("No translations available for the selected book.")
-        return []
-
-    print("Translations for the selected book:")
-    for translation in translations:
-        print(f"""
-        Language: {translation.language}
-        Title: {translation.title}
-        Description: {translation.description}
-        Book URL: {translation.bookUrl}
-        Intro Transcript: {translation.introTranscript}
-        Book Transcript: {translation.bookTranscript}
-        Book SRT URL: {translation.bookSrtUrl}
-        Book Duration: {translation.bookDuration}
-        """)
-
 def main():
-    # category_prompt = load_category_prompt(category_key)
     book = choose_book()
-    translation_en = get_translation(book.id, "EN")
-    translations = get_translations(book.id)
 
-    for translation in translations:
-        key = translation.language.name
-        if key != "JA":
-            continue
+    translation_en = get_translation(book.id)
 
-        # Prompt the user to keep or reject the phrase
-        choice = input(
-            "Do you want to change the thumbnail?").strip().lower()
-
-        if choice == "yes" or choice == "y":
-            thumbnail_filename = choose_thumbnail_no_text(translation_en.title)
-            try_upload_to_s3(thumbnail_filename, f"{book.id}/{thumbnail_filename}")
-            book["thumbnail"] = f"{thumbnail_filename}"
-            session.add(book)
-            session.commit()
-
-        text = choose_book_translation(translation_en.text, languages[key])
+    for key, language in languages.items():
+        print(book.id, language, translation_en.title)
+        delete_translation(book.id, key)
+        text = choose_book_translation(translation_en.text, language)
+        intro = choose_text_translation(translation_en.intro, language)
+        title = choose_text_translation(translation_en.title, language)
+        description = choose_text_translation(translation_en.description, language)
         mp3 = f"{key.lower()}.mp3"
         srt = f"{key.lower()}.srt"
         duration = generateAudioAndSrt_google(text, key, mp3, srt)
         try_upload_to_s3(mp3, f"{book.id}/{mp3}")
         try_upload_to_s3(srt, f"{book.id}/{srt}")
-        translation.text = text
-        translation.duration = duration
-        translation.srt = srt
-        translation.mp3 = mp3
+
+        translation = Translation(
+            language=Language[key],
+            title=title,
+            description=description,
+            intro=intro,
+            text=text,
+            mp3=mp3,
+            srt=srt,
+            bookId=book.id,
+            duration=duration
+        )
         session.add(translation)
         session.commit()
 

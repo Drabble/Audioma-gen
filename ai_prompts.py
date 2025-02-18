@@ -48,6 +48,10 @@ ideas_prompt = """
 audiobook_prompt = """
 You are a seasoned audiobook writer with expertise in creating educational content for language learners. 
 Your task is to write a simple, continuous, and clear text designed for beginners who are non-native speakers. 
+The content should stay factual, but try to teach new facts to the user. It is better to dive into a topic than to
+just give a very simple high-level overview of all of its parts. For example if you talk about fermentation, don't just
+list the ingredients that are fermented. Explain how fermentation works!!!
+
 The subject of the book is: "<SUBJECT>"
 
 Key guidelines:
@@ -59,7 +63,7 @@ Key guidelines:
 - No empty lines allowed between sentences
 
 2. Content Requirements:
-- The text MUST be exactly 2000 words
+- The text MUST be around 3000 words. Never less than 2500 words.
 - Write with pacing suitable for a read-aloud duration of 9-10 minutes
 - Vary sentence length naturally, mixing shorter sentences with longer ones
 - Use concise sentences and basic vocabulary to ensure easy comprehension
@@ -69,6 +73,7 @@ Key guidelines:
 - You MUST NOT add a morale to the story
 - You MUST BE factual
 - If you use units like feet or fahrenheit, always provide the equivalent european unit
+- **IMPORTANT**: Output without additional commentary!
 
 Example of correct formatting:
 "The sun rose over the mountains, casting long shadows across the valley. 
@@ -88,29 +93,20 @@ a river sparkled with golden reflections,
 # Introduction prompt - Provides a brief but effective introduction
 intro_prompt = """
 Your task is to write a brief, clear introduction that sets up the content ahead. 
-The introduction should be simple and concise, lasting between 30 seconds to 1 minute (approximately 80 to 150 words).
+The introduction should be simple and approximately 80 to 200 words.
 
-1. Format Requirements:
-- Only use line breaks to separate complete sentences
-- YOU MUST NEVER ADD A LINE BREAK WHEN THERE IS A COMMA!
-- YOU MUST ADD A LINE BREAK WHEN IS A DOT if it's the end of the sentence!
-- No empty lines allowed between sentences
-
-2. Content Requirements:
-- The text MUST last between 30 seconds to 1 minute with approximately 100 words.
-- Vary your sentence length naturally. While shorter sentences are fine, avoid writing multiple short sentences in succession.
-- Mix shorter sentences with longer, more detailed ones to maintain engagement and natural flow.
+Content Requirements:
 - Use clear and basic vocabulary for easy comprehension by non-native speakers.
 - The introduction should explain the subject matter and what to expect in the content ahead.
 - Avoid parenthetical statements or complex structures that might disrupt the flow.
 - Avoid any punctuation like colons, dashes, or symbols.
 - If you use units like feet or fahrenheit, always provide the equivalent european unit like meter or celsius.
-- YOU MUST NOT add empty lines between sentences.
 - YOU MUST NOT mention anything about audiobooks, listening, or similar references.
+- Do not include any introductory phrases like "Here is your" or "This is an introduction about". Just output the text directly.
+- **IMPORTANT**: Output without additional commentary!
 
 Example of correct formatting:
-"The sun rose over the mountains, casting long shadows across the valley. 
-Birds began their morning songs as the first rays of light touched the treetops. 
+"The sun rose over the mountains, casting long shadows across the valley. Birds began their morning songs as the first rays of light touched the treetops. 
 In the distance, a river sparkled with golden reflections, and the entire forest seemed to wake up at once."
 
 Example of incorrect formatting:
@@ -121,14 +117,32 @@ as the first rays of light touched the treetops.
 In the distance, 
 a river sparkled with golden reflections,
  and the entire forest seemed to wake up at once."
+
+The content to generate an introduction for is: 
+<TEXT>
 """
 
 # Audiobook system prompt - Ensures smooth and continuous text
 text_split_prompt = """
     I will give you a text below. You MUST split each phrase into its own separate line using line breaks. 
     This will allow me to parse it later and display of phrases one by one.
-    IT IS MANDATORY THAT YOU MATCH THE EXACT NUMBER OF LINES BETWEEN THE TEXT AND YOUR TRANSLATION.
-    THIS IS EVEN MORE IMPORTANT WHEN THE TEXT IS IN JAPANESE!!!
+    Make sure to only put one phrase per line. There should never be a line ending in a comma.
+    
+    - **IMPORTANT**: Output without additional commentary!
+            
+    Example of correct formatting:
+    "The sun rose over the mountains, casting long shadows across the valley. 
+    Birds began their morning songs as the first rays of light touched the treetops. 
+    In the distance, a river sparkled with golden reflections, and the entire forest seemed to wake up at once."
+        
+    Example of incorrect formatting:
+    "The sun rose over the mountains,
+    casting long shadows across the valley.
+    Birds began their morning songs
+    as the first rays of light touched the treetops.
+    In the distance, 
+    a river sparkled with golden reflections,
+     and the entire forest seemed to wake up at once."
 
     <TEXT>
 """
@@ -143,16 +157,24 @@ book_translation_prompt = """
     Use simple vocabulary and concise sentences for easy comprehension.
     Ensure that the translation closely mirrors the structure of the original text.
     Avoid any punctuation like colons, dashes, or symbols.
+    **IMPORTANT**: Output without additional commentary!
 
     Mandatory rule:
 
     The translated text must keep the exact same structure, with each phrase on its own line, just like the original. 
     If a phrase becomes two separate sentences in <LANGUAGE>, they must still appear on the same line.
     
-    Control rule:
-    There should always be the exact same number of line breaks in the translated text as in the original text.
+    If you are translating to japanese, use spaces between each word. This is very important otherwise we are not 
+    able to split the text by word easily.
+    
+    There MUST ALWAYS be the exact same number of phrases in the translated text as in the original text.
+    Keeping the same number of phrases. Each line should correspond to one translated phrase, even if slight rewording is needed to fit the format.
+    
+    IT IS MANDATORY THAT YOU MATCH THE EXACT NUMBER OF LINES BETWEEN THE TEXT AND YOUR TRANSLATION.
+    THIS IS EVEN MORE IMPORTANT WHEN THE TEXT IS IN JAPANESE OR RUSSIAN!!!
 
     Here is the text:
+    
     <TEXT>
 """
 
@@ -168,6 +190,7 @@ text_translation_prompt = """
 
     Mandatory rule:
     Keep the translation as a single phrase or title without additional commentary or embellishments, without special
+    **IMPORTANT**: Output without additional commentary!
 
     Here is the text:
     <TEXT>
@@ -196,6 +219,7 @@ title_prompt = """
     It should directly reflect the audiobook's subject. 
     Avoid any punctuation like colons, dashes, or symbols.
     The title must not contain double quotes or such.
+    **IMPORTANT**: Output without additional commentary!
 
     Mandatory rule:
 
@@ -212,30 +236,56 @@ description_prompt = """
     Keep the description simple and to the point.
     Ensure the text is easy to understand for non-native speakers.
     Avoid any punctuation like colons, dashes, or symbols.
+    **IMPORTANT**: Output without additional commentary!
 """
 
 # Thumbnail prompt - Clean, minimalist design
 thumbnail_prompt = """
-    You are a skilled graphic designer with expertise in creating modern, minimalistic illustrations. 
-    Your task is to generate an appealing and simple illustration for an audiobook with the title <TITLE>. 
-    The design should be professional and cohesive, using clean lines and soft color tones. 
-    Incorporate relevant imagery that reflects the theme of the audiobook.
+    Design a minimalist, high-contrast style poster on the topic "<TITLE>".
+    Use bold, geometric illustrations with a **stark contrasting color palette**.  
+    The colors must be **black, white, and one accent color (deep red, teal, or mustard yellow)**.  
+    Use only **flat vector-style** illustrations, avoiding gradients and textures.  
+    The background should be **a solid color with no patterns or noise**.  
+    The composition must be **centered and balanced**, ensuring a strong focal point.  
+    Use simple, symbolic imagery that represents the topic in an abstract way.
+    NO TEXT IN THE ILLUSTRATION!
+    It is mandatory that the image contains no text!
+"""
 
-    Key guidelines:
-
-    The illustration MUST NOT represent a book cover, only the illustration.
-    The illustration MUST be text-free.
-    The style MUST be modern and minimalistic.
-    You MUST avoid excessive details; focus on simplicity and clarity!
+# Thumbnail prompt - Clean, minimalist design
+thumbnail_no_text_prompt_prompt = """
+    Generate a simple yet effective prompt to generate an image for the following audiobook: "<TITLE>".
+    The description of this audiobook is <DESCRIPTION>.
+    
+    Here are some informations to generate the prompt:
+    
+    - Minimalist, high-contrast style poster with NO TEXT.  
+    - Bold, geometric illustrations with a stark contrasting color palette.  
+    - Dark background and one accent color (deep red, teal, or mustard yellow).  
+    - Only flat vector-style illustrations, avoiding gradients and textures.  
+    - The background should be a solid dark color with no patterns or noise.  
+    - The composition must be centered and balanced, ensuring a strong focal point.  
+    - Use simple, symbolic imagery that represents the audiobook’s theme in an abstract way.
+    - **IMPORTANT**: Output without additional commentary!
+    
+    Don't forget that the topic is: <TITLE>
+    
+    Keep the prompt minimal otherwise the generative IA won't keep track of everything.
+    Keep the design minimal otherwise it's too much for the user.
+    YOU REALLY MUST MAKE SURE THERE IS NOT TEXT IN THE ILLUSTRATION OTHERWISE ITS RUINED.
+    Just give me the prompt as a single paragraph. Keep it clear and short.    
 """
 
 # Thumbnail prompt - Clean, minimalist design
 thumbnail_prompt_prompt = """
     Generate a simple yet effective prompt to generate an image for the audiobook "<TITLE>".
+    The title is in the language <LANGUAGE>, it's normal.
+    
+    The description of the audiobook is "<DESCRIPTION>".
     
     The prompt MUST contain the following text: 
         \"\"\"
-            Design a minimalist, high contrast-style poster on <DESCRIPTION> with 
+            Design a minimalist, high contrast-style poster with 
             text "<TITLE>" with bold, geometric illustrations with a stark, 
             contrasting color palette. Use only flat vector style illustrations.
         \"\"\"
@@ -249,5 +299,4 @@ Do not change any of the keys, only translate the values.
 The output should be valid JSON and contain the same keys and structure as the JSON below.
 Provide only the valid JSON output with the values translated, properly indented like the original.
 Do not add any extra text before or after the JSON.
-
 """

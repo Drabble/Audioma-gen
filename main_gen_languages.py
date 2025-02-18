@@ -1,10 +1,9 @@
 import nltk
-
 from ai_google import generateAudioAndSrt_google
+from main import choose_book_translation, choose_text_translation
 from s3 import *
 from db import *
-from audio import *
-from utils import remove_empty_lines
+import time
 
 # Download the necessary NLTK data files
 nltk.download('punkt')
@@ -22,7 +21,6 @@ S3_API_ACCESS_KEY_ID = os.getenv('S3_API_ACCESS_KEY_ID')
 S3_API_ACCESS_KEY_SECRET = os.getenv('S3_API_ACCESS_KEY_SECRET')
 POSTGRES_URL = os.getenv('POSTGRES_URL')
 
-bucket_name = "audioma"
 languages = {"FR": "French",
              "DE": "German",
              "ES": "Spanish",
@@ -40,23 +38,6 @@ languages = {"FR": "French",
              }
 
 current_time = time.time_ns() // 1_000_000
-
-
-def choose_book_translation(text, language):
-    while True:
-        # Generate a single phrase
-        text = generate_book_translation(text, language)
-        print(f"Generated book translation text for language {language}: {text}")
-        return text
-
-
-def choose_text_translation(text, language):
-    while True:
-        # Generate a single phrase
-        text = generate_text_translation(text, language)
-        print(f"Generated text translation for language {language}: {text}")
-        return text
-
 
 def choose_book():
     books = get_books()
@@ -117,36 +98,28 @@ def main():
 
     for key, language in languages.items():
         if not translation_exists(book.id, key):
-            translation_book_text = choose_book_translation(translation_en.bookTranscript, language)
-            translation_intro_text = choose_book_translation(translation_en.introTranscript, language)
-            translation_title = choose_text_translation(translation_en.title, language)
-            translation_description = choose_text_translation(translation_en.description, language)
-            filename = f"{book.category.name}_{current_time}_{key}"
-            translation_intro_mp3_filename = f"{filename}_intro.mp3"
-            translation_intro_srt_filename = f"{filename}_intro.srt"
-            translation_book_mp3_filename = f"{filename}_book.mp3"
-            translation_book_srt_filename = f"{filename}_book.srt"
-            translation_intro_text = remove_empty_lines(translation_intro_text)
-            translation_book_text = remove_empty_lines(translation_book_text)
-            translation_intro_duration = generateAudioAndSrt_google(
-                translation_intro_text, key, translation_intro_mp3_filename, translation_intro_srt_filename)
-            translation_book_duration = generateAudioAndSrt_google(
-                translation_book_text, key, translation_book_mp3_filename, translation_book_srt_filename)
-            try_upload_to_s3(translation_intro_mp3_filename)
-            try_upload_to_s3(translation_intro_srt_filename)
-            try_upload_to_s3(translation_book_mp3_filename)
-            try_upload_to_s3(translation_book_srt_filename)
+            print(book.id, language, translation_en.title)
+            delete_translation(book.id, key)
+            text = choose_book_translation(translation_en.text, language)
+            intro = choose_text_translation(translation_en.intro, language)
+            title = choose_text_translation(translation_en.title, language)
+            description = choose_text_translation(translation_en.description, language)
+            mp3 = f"{key.lower()}.mp3"
+            srt = f"{key.lower()}.srt"
+            duration = generateAudioAndSrt_google(text, key, mp3, srt)
+            try_upload_to_s3(mp3, f"{book.id}/{mp3}")
+            try_upload_to_s3(srt, f"{book.id}/{srt}")
 
             translation = Translation(
                 language=Language[key],
-                title=translation_title,
-                description=translation_description,
-                introTranscript=translation_intro_text,
-                bookTranscript=translation_book_text,
-                bookUrl=f"https://pub-8f5a34efcc0f4fe1b458438a8b574ac3.r2.dev/audioma/{translation_book_mp3_filename}",
-                bookSrtUrl=f"https://pub-8f5a34efcc0f4fe1b458438a8b574ac3.r2.dev/audioma/{translation_book_srt_filename}",
+                title=title,
+                description=description,
+                intro=intro,
+                text=text,
+                mp3=mp3,
+                srt=srt,
                 bookId=book.id,
-                bookDuration=translation_book_duration
+                duration=duration
             )
             session.add(translation)
             session.commit()

@@ -21,7 +21,7 @@ GOOGLE_TTS_URL = "https://texttospeech.googleapis.com/v1beta1/text:synthesize"
 languages = {
     "EN": {"languageCode": "en-US", "name": "en-US-Journey-D"},
     "FR": {"languageCode": "fr-FR", "name": "fr-FR-Journey-D"},
-    "DE": {"languageCode": "de-DE", "name": "de-DE-Journey-D"},
+    "DE": {"languageCode": "de-DE", "name": "de-DE-Wavenet-D"},
     "ES": {"languageCode": "es-ES", "name": "es-ES-Wavenet-B"},
     "PT": {"languageCode": "pt-PT", "name": "pt-PT-Wavenet-C"},
     "JA": {"languageCode": "ja-JP", "name": "ja-JP-Neural2-C"},
@@ -88,7 +88,7 @@ def synthesize(text, lang: str, output_filename="output.mp3"):
         return combined_segment
 
 # Function to generate audio and SRT from input text
-def generateAudioAndSrt_google(input_text, lang: str, output_audio="output.mp3", output_srt="output.srt"):
+def generateAudioAndSrt_google(input_text, lang: str, output_audio: str="output.mp3", output_srt: str="output.srt"):
     total_audio_path = DATA_DIR_GENERATED / output_audio
     srt_path = DATA_DIR_GENERATED / output_srt
 
@@ -118,7 +118,7 @@ def generateAudioAndSrt_google(input_text, lang: str, output_audio="output.mp3",
         sleep_time = max(0.0, 2.1 - synthesize_duration)
         sleep(sleep_time) # JourneyRequestsPerMinutePerProject	30
     combined_audio.export(total_audio_path, format="mp3", bitrate="64")
-    with open(srt_path, "a", encoding="utf-8") as srt_file:
+    with open(srt_path, "w", encoding="utf-8") as srt_file:
         srt_file.write(srt)
     print(f"SRT file written to {srt_path}")
     print(f"Combined audio written to {total_audio_path}")

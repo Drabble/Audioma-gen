@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 from pydub import AudioSegment
 
 from ai_prompts import audiobook_prompt, intro_prompt, description_prompt, book_translation_prompt, \
-    text_translation_prompt, thumbnail_prompt_prompt, title_prompt, text_split_prompt, ideas_prompt, json_prompt
+    text_translation_prompt, thumbnail_prompt_prompt, title_prompt, text_split_prompt, ideas_prompt, json_prompt, \
+    thumbnail_no_text_prompt_prompt, thumbnail_prompt
 
 # Note: Audio generation will need a different service since Anthropic doesn't offer TTS
 
@@ -35,7 +36,7 @@ def generate_ideas(custom_idea: str, category: str, used_ideas: str):
 
     response = anthropic.messages.create(
         model=model,
-        temperature=temperature,
+        temperature=0.8,
         max_tokens=1000,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -61,9 +62,7 @@ def generate_intro_text(subject, audiobook_text):
         temperature=temperature,
         max_tokens=1000,
         messages=[
-            {"role": "user", "content": audiobook_prompt.replace("<SUBJECT>", subject)},
-            {"role": "assistant", "content": audiobook_text},
-            {"role": "user", "content": intro_prompt}
+            {"role": "user", "content": intro_prompt.replace("<TEXT>", audiobook_text)}
         ]
     )
     return response.content[0].text
@@ -84,7 +83,7 @@ def generate_text_split(text):
 def generate_title(subject, audiobook_text):
     response = anthropic.messages.create(
         model=model,
-        temperature=temperature,
+        temperature=0.8,
         max_tokens=100,
         messages=[
             {"role": "user", "content": audiobook_prompt.replace("<SUBJECT>", subject)},
@@ -132,14 +131,24 @@ def generate_text_translation(text, language):
     )
     return response.content[0].text
 
-
-def generate_thumbnail_prompt(title):
+def generate_thumbnail_no_text_prompt(title, description) -> str:
     response = anthropic.messages.create(
         model=model,
-        temperature=temperature,
+        temperature=0.8,
         max_tokens=500,
         messages=[
-            {"role": "user", "content": thumbnail_prompt_prompt.replace("<TITLE>", title)}
+            {"role": "user", "content": thumbnail_no_text_prompt_prompt.replace("<TITLE>", title).replace("<DESCRIPTION>", description)},
+        ]
+    )
+    return response.content[0].text
+
+def generate_thumbnail_prompt(title, description, language):
+    response = anthropic.messages.create(
+        model=model,
+        temperature=0.8,
+        max_tokens=500,
+        messages=[
+            {"role": "user", "content": thumbnail_prompt_prompt.replace("<TITLE>", title).replace("<DESCRIPTION>", description).replace("<LANGUAGE>", language)}
         ]
     )
     return response.content[0].text

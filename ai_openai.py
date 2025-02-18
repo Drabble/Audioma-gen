@@ -1,4 +1,3 @@
-import time
 import openai
 from openai import OpenAI
 import os
@@ -6,8 +5,8 @@ from pydub import AudioSegment
 from pathlib import Path
 
 from ai_prompts import ideas_prompt, audiobook_prompt, intro_prompt, text_split_prompt, description_prompt, \
-    book_translation_prompt, text_translation_prompt, thumbnail_prompt, thumbnail_prompt_prompt, title_prompt
-from prompts import *
+    book_translation_prompt, text_translation_prompt, thumbnail_prompt, thumbnail_prompt_prompt, title_prompt, \
+    thumbnail_no_text_prompt_prompt
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI()
@@ -58,10 +57,7 @@ def generate_intro_text(subject, audiobook_text):
     response = openai.chat.completions.create(
         model=completion_model,
         messages=[
-            # {"role": "system", "content": system_prompt},
-            {"role": "user", "content": audiobook_prompt.replace("<SUBJECT>", subject)},
-            {"role": "assistant", "content": audiobook_text},
-            {"role": "user", "content": intro_prompt},
+            {"role": "user", "content": intro_prompt.replace("<TEXT>", audiobook_text)}
         ]
     )
     return response.choices[0].message.content
@@ -135,12 +131,20 @@ def generate_thumbnail_openai(title, description) -> str:
     )
     return response.data[0].b64_json
 
-
-def generate_thumbnail_prompt(title) -> str:
+def generate_thumbnail_no_text_prompt_openai(title, description) -> str:
     response = openai.chat.completions.create(
         model=completion_model,
         messages=[
-            {"role": "user", "content": thumbnail_prompt_prompt.replace("<TITLE>", title)},
+            {"role": "user", "content": thumbnail_no_text_prompt_prompt.replace("<TITLE>", title).replace("<DESCRIPTION>", description)},
+        ]
+    )
+    return response.choices[0].message.content
+
+def generate_thumbnail_prompt(title, description, language) -> str:
+    response = openai.chat.completions.create(
+        model=completion_model,
+        messages=[
+            {"role": "user", "content": thumbnail_prompt_prompt.replace("<TITLE>", title).replace("<DESCRIPTION>", description).replace("<LANGUAGE>", language)}
         ]
     )
     return response.choices[0].message.content

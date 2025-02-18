@@ -4,10 +4,9 @@ from pydub import AudioSegment
 from pathlib import Path
 from cartesia import Cartesia
 
-from prompts import *
+from ai_prompts import *
 
 client = Cartesia(api_key=os.getenv("CARTESIA_API_KEY"))
-gap_duration_ms = 700
 DATA_DIR_GENERATED = Path.cwd() / "generated"
 DATA_DIR_GENERATED.mkdir(exist_ok=True)
 

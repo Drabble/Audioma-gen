@@ -21,17 +21,13 @@ Base = declarative_base()
 class Category(enum.Enum):
     SCIENCE = "SCIENCE"
     HISTORY = "HISTORY"
-    GEOGRAPHY = "GEOGRAPHY"
-    MOVIE = "MOVIE"
-    DOCUMENTARY = "DOCUMENTARY"
-    LITERATURE = "LITERATURE"
-    TECHNOLOGY = "TECHNOLOGY"
-    BIOGRAPHY = "BIOGRAPHY"
-    PHILOSOPHY = "PHILOSOPHY"
+    FOOD = "FOOD"
+    TRAVEL_CULTURE = "TRAVEL_CULTURE"
+    CINEMA = "CINEMA"
+    BELIEFS_PHILOSOPHY = "BELIEFS_PHILOSOPHY"
     FANTASY = "FANTASY"
     NATURE = "NATURE"
     PERSONAL_DEVELOPMENT = "PERSONAL_DEVELOPMENT"
-    PSYCHOLOGY = "PSYCHOLOGY"
     ART = "ART"
     MUSIC = "MUSIC"
     HEALTH = "HEALTH"
@@ -87,11 +83,11 @@ class Translation(Base):
     language = Column(Enum(Language))  # Assuming `Language` enum is imported
     title = Column(String)
     description = Column(String)
-    bookUrl = Column(String)
-    introTranscript = Column(String)
-    bookTranscript = Column(String)
-    bookSrtUrl = Column(String)
-    bookDuration = Column(Float)
+    mp3 = Column(String)
+    intro = Column(String)
+    text = Column(String)
+    srt = Column(String)
+    duration = Column(Float)
     bookId = Column(String, ForeignKey('Book.id')
                     )
 
@@ -102,7 +98,7 @@ class Book(Base):
                 server_default=func.gen_random_uuid())
     status = Column(Enum(Status))  # Assuming `Status` enum is imported
     category = Column(Enum(Category))  # Assuming `Category` enum is imported
-    thumbnailUrl = Column(String)
+    thumbnail = Column(String)
     isPaid = Column(Boolean)
     createdAt = Column(DateTime, default=datetime.utcnow)
 
@@ -130,6 +126,10 @@ def get_books():
     return session.query(Book.id, Translation.title, Book.category).join(Book, Book.id == Translation.bookId).filter(
         Translation.language == Language.EN).all()
 
+def get_all_books():
+    # Query to get the entire book entity with the specified category and 'EN' translations
+    return session.query(Book).all()
+
 
 def get_translations(book_id):
     # Query to get all translations for the given book ID
@@ -140,6 +140,17 @@ def get_translation(book_id, lang='EN') -> Optional[Translation]:
     # Query to get all translations for the given book ID
     return session.query(Translation).filter(Translation.bookId == book_id,
                                              Translation.language == lang).first()
+
+def delete_translation(book_id, lang='EN') -> Optional[Translation]:
+    # Query to get all translations for the given book ID
+    translation = session.query(Translation).filter(
+        Translation.bookId == book_id,
+        Translation.language == lang
+    ).first()
+
+    if translation:
+        session.delete(translation)
+        session.commit()
 
 
 def translation_exists(book_id: str, lang: str) -> bool:
