@@ -150,7 +150,6 @@ def choose_intro_text(subject, book_text):
             return text
         print("Generating a new intro...")
 
-
 def choose_title(subject, book_text):
     while True:
         # Generate a single phrase

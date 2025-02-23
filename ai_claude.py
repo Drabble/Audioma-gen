@@ -7,7 +7,8 @@ from pydub import AudioSegment
 
 from ai_prompts import audiobook_prompt, intro_prompt, description_prompt, book_translation_prompt, \
     text_translation_prompt, thumbnail_prompt_prompt, title_prompt, text_split_prompt, ideas_prompt, json_prompt, \
-    thumbnail_no_text_prompt_prompt, thumbnail_prompt
+    thumbnail_no_text_prompt_prompt, thumbnail_prompt, difficulty_prompt
+from db import Difficulty
 
 # Note: Audio generation will need a different service since Anthropic doesn't offer TTS
 
@@ -66,6 +67,28 @@ def generate_intro_text(subject, audiobook_text):
         ]
     )
     return response.content[0].text
+
+def generate_difficulty(text) -> Difficulty:
+    try:
+        response = anthropic.messages.create(
+            model=model,
+            temperature=temperature,
+            max_tokens=1000,
+            messages=[
+                {"role": "user", "content": difficulty_prompt.replace("<TEXT>", text)}
+            ]
+        )
+
+        result = response.content[0].text.strip()
+
+        for level in Difficulty:
+            if level.value in result:
+                return level
+
+        return Difficulty.UNKNOWN
+    except Exception as e:
+        print(f"Error: {e}")
+        return Difficulty.UNKNOWN
 
 
 def generate_text_split(text):

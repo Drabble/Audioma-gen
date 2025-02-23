@@ -99,7 +99,6 @@ def main():
     for key, language in languages.items():
         if not translation_exists(book.id, key):
             print(book.id, language, translation_en.title)
-            delete_translation(book.id, key)
             text = choose_book_translation(translation_en.text, language)
             intro = choose_text_translation(translation_en.intro, language)
             title = choose_text_translation(translation_en.title, language)

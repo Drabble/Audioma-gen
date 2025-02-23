@@ -122,6 +122,14 @@ The content to generate an introduction for is:
 <TEXT>
 """
 
+difficulty_prompt = """
+Based on the following multilingual audiobook excerpt, classify its difficulty level as either BEGINNER, INTERMEDIATE, or ADVANCED.
+Respond with only one of these words and nothing else!
+BEGINNER is equivalent to A1 or A2 level. INTERMEDIATE is equivalent to B1 or B2. ADVANCED is equivalent to C1 or C2.
+
+<TEXT>
+"""
+
 # Audiobook system prompt - Ensures smooth and continuous text
 text_split_prompt = """
     I will give you a text below. You MUST split each phrase into its own separate line using line breaks. 
@@ -261,7 +269,7 @@ thumbnail_no_text_prompt_prompt = """
     
     - Minimalist, high-contrast style poster with NO TEXT.  
     - Bold, geometric illustrations with a stark contrasting color palette.  
-    - Dark background and one accent color (deep red, teal, or mustard yellow).  
+    - Dark (almost black) background and one or more accent colors.  
     - Only flat vector-style illustrations, avoiding gradients and textures.  
     - The background should be a solid dark color with no patterns or noise.  
     - The composition must be centered and balanced, ensuring a strong focal point.  

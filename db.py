@@ -17,6 +17,11 @@ POSTGRES_URL = os.getenv('POSTGRES_URL')
 # Database setup
 Base = declarative_base()
 
+class Difficulty(enum.Enum):
+    BEGINNER = "BEGINNER"
+    INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    UNKNOWN = "UNKNOWN"
 
 class Category(enum.Enum):
     SCIENCE = "SCIENCE"
@@ -97,6 +102,7 @@ class Book(Base):
     id = Column(String, primary_key=True,
                 server_default=func.gen_random_uuid())
     status = Column(Enum(Status))  # Assuming `Status` enum is imported
+    difficulty = Column(Enum(Difficulty))  # Assuming `Status` enum is imported
     category = Column(Enum(Category))  # Assuming `Category` enum is imported
     thumbnail = Column(String)
     isPaid = Column(Boolean)
